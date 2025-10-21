@@ -23,7 +23,7 @@ T8
 user@host :$
 ```
 
-The letter L indicates a read operation, and the letter E indicates a write operation. In both cases, the number following them indicates the array position accessed. The letter C represents a compare operation. The letter T appears only once, and indicates the total size of the array. In the example, the array size is 8 elements, and the read/write operations refer to the positions between 0 and 7. After executing the sort algorithm, `gen_trace` traverses the array to check if it has been sorted, and displays a message. The trace can be considered finished when it reaches the letter O (sorted) or the letter D (unordered).
+The letter R indicates a read operation, and the letter W indicates a write operation. In both cases, the number following them indicates the array position accessed. The letter C represents a compare operation. The letter T appears only once, and indicates the total size of the array. In the example, the array size is 8 elements, and the read/write operations refer to the positions between 0 and 7. After executing the sort algorithm, `gen_trace` traverses the array to check if it has been sorted, and displays a message. The trace can be considered finished when it reaches the letter O (sorted) or the letter D (unordered).
 
 It should be noticed that in the previous example it was necessary to access 8 elements to sort only 4. This is because the mergesort algorithm (sorting by mixing sorted lists) was used, which requires additional space.
 
