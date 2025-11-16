@@ -1,4 +1,4 @@
-all: gen_trace count_ops calculate_ws sim_pag_random
+all: gen_trace count_ops calculate_ws sim_pag_random sim_pag_fifo
 
 # Add progressively to all: sim_pag_random sim_pag_lru sim_pag_fifo sim_pag_fifo2ch
 

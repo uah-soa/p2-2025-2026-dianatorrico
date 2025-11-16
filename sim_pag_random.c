@@ -42,10 +42,36 @@ void init_tables(ssystem* S) {
 unsigned sim_mmu(ssystem* S, unsigned virtual_addr, char op) {
   unsigned physical_addr;
   int page, frame, offset;
+  // we try to simulate the MMU (memory managment unit)
 
-  // TODO(student):
-  //       Type in the code that simulates the MMU's (hardware)
-  //       behaviour in response to a memory access operation
+  // 1st calculamos la pagina y el desplazamiento al que vamos 
+  page   = virtual_addr / S-> pagsz;
+  offset = virtual_addr % S->pagsz;
+
+  // 2nd verificamos que el acceso es correcto
+  if (page < 0 || page >= S->numpags) {
+    S->numillegalrefs++;                // out of range 
+    return ~0U;                         // invalid fisical direction
+  }
+
+  // 3rd consultar la tabla de paginas 
+  if (!S->pgt[page].present) {
+    handle_page_fault(S, virtual_addr);
+  }  
+
+  // 4th 
+  frame = S-> pgt[page].frame;
+  physical_addr = frame * S->pagsz + offset;
+
+
+  // 5th pagina obtenida como referenciada 
+  reference_page(S, page, op);
+
+  // 6th show information 
+  if (S->detailed) {
+    printf("\t %c %u==P %d(M %d)+ %d\n", 
+           op, virtual_addr, page, frame, offset);
+  }
 
   return physical_addr;
 }
@@ -59,14 +85,40 @@ void reference_page(ssystem* S, int page, char op) {
   }
 }
 
-// Functions that simulate the operating system
+// Functions that simulate the operating system when page fault
 
 void handle_page_fault(ssystem* S, unsigned virtual_addr) {
   int page, victim, frame, last;
+  //1st calcular la pagina y aumentar el contador 
+  S->numpagefaults++;
+  page = virtual_addr / S->pagsz;
 
-  // TODO(student):
-  //       Type in the code that simulates the Operating
-  //       System's response to a page fault trap
+  // mostramos el mensaje si esta en modo detalle
+  if (S->detailed) {
+    printf("PAGE_FAULT in P %d\n", page);
+  }
+
+  // buscamos si hay huecos libres 
+  if (S->listfree != -1) {
+    last = S->listfree;
+    frame = S->frt[last].next;
+
+    if(frame == last){
+      // si es el utlimo hueco que queda libre
+      S->listfree = -1;
+    }
+    else{
+      S->frt[last].next = S->frt[frame].next;
+    }
+
+    occupy_free_frame(S, frame, page);
+
+  }
+  else {
+    // no hay un hueco libre por lo que tenemos que reemplazar ese trozo 
+    victim = choose_page_to_be_replaced(S);
+    replace_page(S,victim,page);
+  }
 }
 
 static unsigned myrandom(unsigned from,  // <<--- random
@@ -126,13 +178,18 @@ void replace_page(ssystem* S, int victim, int newpage) {
   S->frt[frame].page = newpage;
 }
 
+//vincular pagina con un frame libre 
 void occupy_free_frame(ssystem* S, int frame, int page) {
   if (S->detailed) printf("@ Storing P%d in F%d\n", page, frame);
 
-  // TODO(student):
-  //       Write the code that links the page with the frame and
-  //       vice-versa, and wites the corresponding values in the
-  //       state bits of the page (presence...)
+  // actualizamos la tabla de paginas 
+  S->pgt[page].present  = 1;               //pagina presente en memoria 
+  S->pgt[page].frame    = frame;           // donde 
+  S->pgt[page].modified = 0;        
+
+  // actualizamos la tabla de frames 
+  S->frt[frame].page = page;
+  
 }
 
 // Functions that show results
